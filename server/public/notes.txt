@@ -1,0 +1,421 @@
+Building a WebShop.
+
+Minimal online presence with no online payment, instead it is prepared and ready in store for you when you arrive.
+
+Users
+- id
+- Name
+- Email
+
+
+Products
+- id
+- Name
+- Description
+
+Orders (a collection of products essentially)
+- id
+- secret_code
+- user_id
+
+Products - Orders
+- product_id
+- order_id
+- qty
+
+Products api
+GET /
+
+Response
+[
+
+{
+    'id': '1',
+    'name': 'Hammer'.,
+    'Description: "a hammer'
+
+}
+
+]
+
+
+/api/Orders
+
+POST /
+
+Request
+{
+    'name': 'Ross'
+    'email': '',
+    'products': [
+        { id: 1, quantity: 3}
+    ]
+}
+
+Response
+{
+    order_id: '1'
+    secret_code: 'Red Badger'
+}
+
+
+
+Products.js in DB
+
+const connection = require('./connection')
+
+function getProducts(db = connection) {
+    return db('products').select()
+}
+
+module.exports = {
+    getProducts,
+
+}
+
+
+Products.js in Routes
+
+const express= require('express')
+const router = express.Router()
+const productsDb = require('../db/products')
+
+// Products API is what we're building
+// GET /api/products
+
+router.get('/', (req, res) => {
+    productsDb.getProducts()
+    .then(products => {
+        res.json(products)
+    })
+    .catch(err => {
+        res.status(500).json({ message: 'something is broken' })
+    })
+})
+
+
+Server.js
+const productRoutes = require('./routes/products')
+server.use('/api/products', productRoutes)
+
+Orders.js in DB
+
+const connection = require('./connection)
+
+function creatOrder( db = connection ) {
+    return db('orders')
+}
+
+
+Global State:
+
+{
+    products: [
+        {
+            id: 1
+            name: 'Hammer'
+            description: ''
+            image_url: ''
+        }
+    ],
+    cart: [
+            { product_id: 1, quantity: 3}
+        ],
+    orders: [
+        {
+            name: 'Ross',
+            email: 'ross@ross.com'
+            products: [
+                { idL 1, quantity: 3}
+            ],
+            secret_code: 'Red Badger'
+        }
+    ]
+}
+
+
+Reducers
+    index.js
+
+import { combineReducers } from 'redux'
+
+iport products from './products
+import cart from './cart'
+import orders from './orders'
+
+// Set up your index reducer based on how you want State to look / what you want state to be able to access
+
+export default combineReducers({
+
+})
+
+Api Folder - Products.js
+
+import request from 'superagent'
+
+const rootURL = '/api/products'
+
+export function getProducts () {
+    return request.get(rootURL)
+    .then (res => res.body)
+}
+
+
+Actions Index.js
+import { getProducts } from '../apis/products'
+
+export const SET_PRODUCTS = 'SET_PRODUCTS'
+
+export const setProducts = (products) => {
+    return {
+        type: SET_PRODUCTS,
+        products
+    }
+}
+
+export const fetchProducts = () => {
+    return dispatch => {
+        return getProducts()
+        .then(products => {
+            dispatch(setProducts(products))
+        })
+     }
+}
+
+Reducers -- Products
+
+import { getProducts } from '../apis/products'
+
+const initialState = []
+
+export const SET_PRODUCTS = 'SET_PRODUCTS'
+
+const reducer = (state = initialState, action) => {
+
+}
+
+actions index.js
+
+
+
+
+App.jsx
+
+componentDidMount() {
+    this.props.dispatch(fetchProducts())   ??
+}
+
+render () {
+    <>
+    <Products />
+    </>
+}
+
+
+Products.jsx
+
+import React from 'react'
+import { connect } from 'react-redux'
+
+function Products (props) {
+    return (
+        <ul className='products'>
+            {props.products.map(product => {
+                return (
+                    <li key={product.id}>
+                    {product.name}
+                    </li>
+                )
+            })}
+            </ul>
+    )
+    
+}
+
+function mapStateToProps(globalState) {
+    return {
+        products: globalState.products
+    }
+}
+
+export default connect(mapStateToProps)(Products)
+
+
+Cart.jsx
+Much the same as products
+change some 'product' to cart
+
+<ul className='cart'>
+    { this.props.cart.length === 0 && <h3> You have no items in your cart</h3>}
+
+{props.cart.length !== 0 && props.cart.map(product => {
+    return ()
+})}
+
+
+
+index.scss
+// use ul with bullet points
+ul.products li {
+    list-style: none;
+}
+
+
+// fixing the problem of 'add to cart' creating a duplicate rather than increasing quantity
+
+cart.js
+
+const reducer ...
+
+swith (action.type) {
+    case ADD_TO_CART:
+        const newState = [...state]
+        const cartItem = newState.find(item => item.product_id === action.product_id) 
+        if (cartItem) {
+            cartItem.quantity++
+        } else {
+            newState.push({ product_id: action.product_id, quantity: action.quantity})
+        }
+        return newState
+    default: 
+        return state
+}
+
+
+
+Cart.jsx
+
+handleChange = e => {
+    this.setState({
+        [event.target.name]: event.target.value
+        // [] because it is a varible - we want it to update email. same as const state = {...this.state} state[event.target.name] = e.target.value  this.setState(state)
+    })
+}
+
+handleSubmit = e => {
+    e.preventDefault()
+    this.props.dispatch(checkoutOrder({
+        email: this.state.email,
+        name: this.state.name,
+        products: this.props.cart.map(item => ({ id: item.product_id, quantity: item.quantity }))
+        // renaims product_id to id
+    }))
+}
+
+
+<button className='checkout' onClick={
+    () => setState({ showCheckout: true})
+}> Checkout </button>
+
+{ this.state.showCheckout && <form onSubmit={this.handleSubmit}>
+<label>
+Name
+<input type='text' name='name' />
+</label>
+
+<label>
+Email
+<input type='text' name='email' />
+</label>
+
+<button type='submit'>
+Checkout
+</button>
+}
+
+
+
+actions.index.js
+export const checkoutOrder = (order) => {
+    return dispatch => {
+        return checkoutOrder(order)
+        .then (details => {
+            console.log(details)
+            //dispatch(addToOrders(products))
+        })
+    }
+}
+
+orders.js in API
+
+export function createOrder (order) {
+    return request.post(rootUrl)
+    .send(order)
+    ??
+}
+
+
+Routes order.js
+
+const OrdersDb = require('../db/order')
+
+//POST to api/orders
+router.post('/', (req, res) => {
+    const order = req.body
+    orderDb.createOrder(order)
+    .then(order => {
+        res.json(order)
+    }) catch (...)
+})
+
+DB order.js
+
+function createOrder(orderDetails, db = connection) {
+    const user = {
+        name: orderDetails.name,
+        email: orderDetails.email,
+    }
+  const order = {}
+    return db('users').insert(user)
+    .then(ids => {
+            user_id: ids[0]
+            order.user_id = ids[0]
+            order.secret_code = newSecretCode()
+            return db('orders').insert(order)
+    })
+    .then(ids => {
+        order.id = ids[0] 
+    })
+    const products_orders = orderDetails.product.map(item => {
+        return {
+            product_id: item.id,
+            order_id: order.id,
+            quantity: item.quantity
+        }
+    })
+    return db('products_order').insert(products_orders)
+})
+
+.then(() => {
+    return {
+        id: order.id,
+        secret_code: order.secret_code
+    }
+}
+
+function newSecretCode() {
+    return 'Red Badger'
+}
+
+
+Orders.jsx - componentDidMount
+
+
+function Orders (props) {
+    return (
+        <>
+        <h2>Your Orders </h2>
+        <ul className='orders'>
+        {this.props.orders.length === 0 && <h4> NO orders</h4>}
+        {this.props.orders.length !== 0 && <h4> Your orders</h4>}
+        {this. props.orders.map(order => {
+            return (
+                <li key={order.id}?
+                Order Code: {order.secret_code}
+                </li>
+            )
+        })}
+        </ul>
+        </>
+    )
+}
